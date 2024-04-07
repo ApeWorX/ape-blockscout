@@ -30,8 +30,6 @@ base_url_test = pytest.mark.parametrize(
         # Ethereum
         ("ethereum", "mainnet", "eth.blockscout.com"),
         ("ethereum", "mainnet-fork", "eth.blockscout.com"),
-        ("ethereum", "goerli", "eth-goerli.blockscout.com"),
-        ("ethereum", "goerli-fork", "eth-goerli.blockscout.com"),
         ("ethereum", "sepolia", "eth-sepolia.blockscout.com"),
         ("ethereum", "sepolia-fork", "eth-sepolia.blockscout.com"),
         # Gnosis
@@ -42,13 +40,13 @@ base_url_test = pytest.mark.parametrize(
         # Optimism
         ("optimism", "mainnet", "optimism.blockscout.com"),
         ("optimism", "mainnet-fork", "optimism.blockscout.com"),
-        ("optimism", "goerli", "optimism-goerli.blockscout.com"),
-        ("optimism", "goerli-fork", "optimism-goerli.blockscout.com"),
         ("optimism", "sepolia", "optimism-sepolia.blockscout.com"),
         ("optimism", "sepolia-fork", "optimism-sepolia.blockscout.com"),
         # Polygon
         ("polygon", "mainnet", "polygon.blockscout.com"),
         ("polygon", "mainnet-fork", "polygon.blockscout.com"),
+        ("polygon", "amoy", "polygon-amoy.blockscout.com"),
+        ("polygon", "amoy-fork", "polygon-amoy.blockscout.com"),
     ],
 )
 

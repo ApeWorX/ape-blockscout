@@ -228,12 +228,10 @@ class MockBlockscoutBackend:
         return {
             "base": {
                 "mainnet": "https://base.blockscout.com/api",
-                "goerli": "https://base-goerli.blockscout.com/api",
                 "sepolia": "https://base-sepolia.blockscout.com/api",
             },
             "ethereum": {
                 "mainnet": "https://eth.blockscout.com/api",
-                "goerli": "https://eth-goerli.blockscout.com/api",
                 "sepolia": "https://eth-sepolia.blockscout.com/api",
             },
             "gnosis": {
@@ -242,11 +240,11 @@ class MockBlockscoutBackend:
             },
             "optimism": {
                 "mainnet": "https://optimism.blockscout.com/api",
-                "goerli": "https://optimism-goerli.blockscout.com/api",
                 "sepolia": "https://optimism-sepolia.blockscout.com/api",
             },
             "polygon": {
                 "mainnet": "https://polygon.blockscout.com/api",
+                "amoy": "https://polygon-amoy.blockscout.com/api",
             },
         }
 

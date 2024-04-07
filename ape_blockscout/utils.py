@@ -9,9 +9,9 @@ API_KEY_ENV_KEY_MAP = {
 }
 
 NETWORKS: Dict[str, List[str]] = {
-    "base": ["mainnet", "goerli", "sepolia"],
-    "ethereum": ["mainnet", "goerli", "sepolia"],
+    "base": ["mainnet", "sepolia"],
+    "ethereum": ["mainnet", "sepolia"],
     "gnosis": ["mainnet", "chiado"],
-    "optimism": ["mainnet", "goerli", "sepolia"],
-    "polygon": ["mainnet"],
+    "optimism": ["mainnet", "sepolia"],
+    "polygon": ["mainnet", "amoy"],
 }
