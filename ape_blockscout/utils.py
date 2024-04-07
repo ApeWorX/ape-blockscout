@@ -13,5 +13,5 @@ NETWORKS: Dict[str, List[str]] = {
     "ethereum": ["mainnet", "sepolia"],
     "gnosis": ["mainnet", "chiado"],
     "optimism": ["mainnet", "sepolia"],
-    "polygon": ["mainnet"],
+    "polygon": ["mainnet", "amoy"],
 }

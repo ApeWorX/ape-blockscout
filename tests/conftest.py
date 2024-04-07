@@ -244,6 +244,7 @@ class MockBlockscoutBackend:
             },
             "polygon": {
                 "mainnet": "https://polygon.blockscout.com/api",
+                "amoy": "https://polygon-amoy.blockscout.com/api",
             },
         }
 
