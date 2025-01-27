@@ -6,6 +6,7 @@ API_KEY_ENV_KEY_MAP = {
     "gnosis": "GNOSIS_BLOCKSCOUT_API_KEY",
     "optimism": "OPTIMISM_BLOCKSCOUT_API_KEY",
     "polygon": "POLYGON_BLOCKSCOUT_API_KEY",
+    "filecoin": "FILECOIN_BLOCKSCOUT_API_KEY",
 }
 
 NETWORKS: Dict[str, List[str]] = {
@@ -14,4 +15,5 @@ NETWORKS: Dict[str, List[str]] = {
     "gnosis": ["mainnet", "chiado"],
     "optimism": ["mainnet", "goerli", "sepolia"],
     "polygon": ["mainnet"],
+    "filecoin": ["mainnet"],
 }

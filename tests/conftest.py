@@ -248,6 +248,9 @@ class MockBlockscoutBackend:
             "polygon": {
                 "mainnet": "https://polygon.blockscout.com/api",
             },
+            "filecoin": {
+                "mainnet": "https://filecoin.blockscout.com/api",
+            },
         }
 
     def set_network(self, ecosystem: str, network: str):
