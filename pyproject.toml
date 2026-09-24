@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ape-blockscout"
-description = "ape-blockscout: Ape plugin"
+description = "ape-blockscout: Blockscout Explorer Plugin"
 readme = "README.md"
 authors = [
     {name = "ApeWorX Ltd.", email = "admin@apeworx.io"}
