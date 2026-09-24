@@ -1,13 +1,14 @@
+import _io  # type: ignore
 import json
 import os
+from collections.abc import Callable
 from io import StringIO
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import IO, Any, Callable, Dict, Optional, Union
+from typing import IO, Any
 from unittest.mock import MagicMock
 
-import _io  # type: ignore
 import ape
 import pytest
 from ape.api import ExplorerAPI
@@ -224,7 +225,7 @@ class MockBlockscoutBackend:
     @cached_property
     def expected_uri_map(
         self,
-    ) -> Dict[str, Dict[str, str]]:
+    ) -> dict[str, dict[str, str]]:
         return {
             "base": {
                 "mainnet": "https://base.blockscout.com/api",
@@ -257,9 +258,9 @@ class MockBlockscoutBackend:
         self,
         method: str,
         module: str,
-        expected_params: Dict,
-        return_value: Optional[Any] = None,
-        side_effect: Optional[Callable] = None,
+        expected_params: dict,
+        return_value: Any | None = None,
+        side_effect: Callable | None = None,
     ):
         if isinstance(return_value, (str, dict)):
             return_value = self.get_mock_response(return_value)
@@ -280,7 +281,7 @@ class MockBlockscoutBackend:
                             actual_json = json.loads(text)
                         except JSONDecodeError:
                             pytest.fail(f"Response text is not JSON: '{text}'.")
-                            return
+                            return None
                     else:
                         # Empty.
                         actual_json = {}
@@ -299,7 +300,7 @@ class MockBlockscoutBackend:
             if return_value:
                 return return_value
 
-            elif side_effect:
+            if side_effect:
                 result = side_effect()
                 return result if isinstance(result, Response) else self.get_mock_response(result)
 
@@ -361,10 +362,10 @@ class MockBlockscoutBackend:
         with open(test_data_path) as response_data_file:
             return self.get_mock_response(response_data_file, file_name=file_name)
 
-    def _expected_get_ct_params(self, address: str) -> Dict:
+    def _expected_get_ct_params(self, address: str) -> dict:
         return {"module": "contract", "action": "getsourcecode", "address": address}
 
-    def setup_mock_account_transactions_response(self, address: Optional[AddressType] = None):
+    def setup_mock_account_transactions_response(self, address: AddressType | None = None):
         file_name = "get_account_transactions.json"
         test_data_path = MOCK_RESPONSES_PATH / file_name
 
@@ -381,7 +382,7 @@ class MockBlockscoutBackend:
             return response
 
     def setup_mock_account_transactions_with_ctor_args_response(
-        self, address: Optional[AddressType] = None
+        self, address: AddressType | None = None
     ):
         file_name = "get_account_transactions_with_ctor_args.json"
         test_data_path = MOCK_RESPONSES_PATH / file_name
@@ -398,16 +399,14 @@ class MockBlockscoutBackend:
             self.set_network("ethereum", "mainnet")
             return response
 
-    def get_mock_response(
-        self, response_data: Optional[Union[IO, Dict, str, MagicMock]] = None, **kwargs
-    ):
+    def get_mock_response(self, response_data: IO | dict | str | MagicMock | None = None, **kwargs):
         if isinstance(response_data, str):
             return self.get_mock_response({"result": response_data})
 
-        elif isinstance(response_data, _io.TextIOWrapper):
+        if isinstance(response_data, _io.TextIOWrapper):
             return self.get_mock_response(json.load(response_data), **kwargs)
 
-        elif isinstance(response_data, MagicMock):
+        if isinstance(response_data, MagicMock):
             # Mock wasn't set.
             response_data = {}
 

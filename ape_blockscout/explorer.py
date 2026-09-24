@@ -1,6 +1,5 @@
 import json
 from json.decoder import JSONDecodeError
-from typing import Optional
 
 from ape.api import ExplorerAPI
 from ape.contracts import ContractInstance
@@ -35,7 +34,7 @@ class Blockscout(ExplorerAPI):
             network_name=self.network.name.replace("-fork", ""),
         )
 
-    def get_contract_type(self, address: AddressType) -> Optional[ContractType]:
+    def get_contract_type(self, address: AddressType) -> ContractType | None:
         if not self.conversion_manager.is_type(address, AddressType):
             # Handle non-checksummed addresses
             address = self.conversion_manager.convert(str(address), AddressType)
