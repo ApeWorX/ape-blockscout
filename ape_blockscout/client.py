@@ -20,7 +20,7 @@ from ape_blockscout.utils import API_KEY_ENV_KEY_MAP, NETWORKS
 
 
 def get_blockscout_uri(ecosystem_name: str, network_name: str) -> str:
-    if ecosystem_name not in API_KEY_ENV_KEY_MAP.keys():
+    if ecosystem_name not in API_KEY_ENV_KEY_MAP:
         raise UnsupportedEcosystemError(ecosystem_name)
 
     if network_name not in NETWORKS[ecosystem_name]:

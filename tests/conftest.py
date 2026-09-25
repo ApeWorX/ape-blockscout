@@ -303,6 +303,7 @@ class MockBlockscoutBackend:
             if side_effect:
                 result = side_effect()
                 return result if isinstance(result, Response) else self.get_mock_response(result)
+            return None
 
         self._handlers[method.lower()][module] = handler
         self._session.request.side_effect = self.handle_request
