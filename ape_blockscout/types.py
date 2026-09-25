@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import Union
 
 from ape.utils import cached_property
 
@@ -20,7 +20,7 @@ class ContractCreationResponse:
     txHash: str
 
 
-ResponseValue = Union[List, Dict, str]
+ResponseValue = Union[list, dict, str]
 
 
 class BlockscoutResponse:

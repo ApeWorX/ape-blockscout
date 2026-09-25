@@ -2,8 +2,8 @@ import json
 import os
 import random
 import time
+from collections.abc import Iterator
 from io import StringIO
-from typing import Dict, Iterator, List, Optional
 
 from ape.logging import logger
 from ape.utils import USER_AGENT, ManagerAccessMixin
@@ -20,7 +20,7 @@ from ape_blockscout.utils import API_KEY_ENV_KEY_MAP, NETWORKS
 
 
 def get_blockscout_uri(ecosystem_name: str, network_name: str) -> str:
-    if ecosystem_name not in API_KEY_ENV_KEY_MAP.keys():
+    if ecosystem_name not in API_KEY_ENV_KEY_MAP:
         raise UnsupportedEcosystemError(ecosystem_name)
 
     if network_name not in NETWORKS[ecosystem_name]:
@@ -50,7 +50,7 @@ class _APIClient(ManagerAccessMixin):
         return get_blockscout_uri(self._ecosystem_name, self._network_name) + "/api"
 
     @property
-    def base_params(self) -> Dict:
+    def base_params(self) -> dict:
         return {"module": self._module_name}
 
     @property
@@ -74,8 +74,8 @@ class _APIClient(ManagerAccessMixin):
 
     def _get(
         self,
-        params: Optional[Dict] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: dict | None = None,
+        headers: dict[str, str] | None = None,
         raise_on_exceptions: bool = True,
     ) -> BlockscoutResponse:
         params = self.__authorize(params)
@@ -97,7 +97,7 @@ class _APIClient(ManagerAccessMixin):
         )
 
     def _post(
-        self, json_dict: Optional[Dict] = None, headers: Optional[Dict[str, str]] = None
+        self, json_dict: dict | None = None, headers: dict[str, str] | None = None
     ) -> BlockscoutResponse:
         data = self.__authorize(json_dict)
         return self._request("POST", data=data, headers=headers)
@@ -106,9 +106,9 @@ class _APIClient(ManagerAccessMixin):
         self,
         method: str,
         raise_on_exceptions: bool = True,
-        headers: Optional[Dict] = None,
-        params: Optional[Dict] = None,
-        data: Optional[Dict] = None,
+        headers: dict | None = None,
+        params: dict | None = None,
+        data: dict | None = None,
     ) -> BlockscoutResponse:
         headers = headers or self.DEFAULT_HEADERS
         for i in range(self._retries):
@@ -137,7 +137,7 @@ class _APIClient(ManagerAccessMixin):
 
         return BlockscoutResponse(response, self.ecosystem_name, raise_on_exceptions)
 
-    def __authorize(self, params_or_data: Optional[Dict] = None) -> Optional[Dict]:
+    def __authorize(self, params_or_data: dict | None = None) -> dict | None:
         env_var_key = API_KEY_ENV_KEY_MAP.get(self.ecosystem_name)
         if not env_var_key:
             return params_or_data
@@ -172,7 +172,7 @@ class ContractClient(_APIClient):
         if not (result_list := result.value or []):
             return SourceCodeResponse()
 
-        elif len(result_list) > 1:
+        if len(result_list) > 1:
             raise UnhandledResultError(result, result_list)
 
         data = result_list[0]
@@ -185,15 +185,15 @@ class ContractClient(_APIClient):
 
     def verify_source_code(
         self,
-        standard_json_output: Dict,
+        standard_json_output: dict,
         compiler_version: str,
-        contract_name: Optional[str] = None,
+        contract_name: str | None = None,
         optimization_used: bool = False,
-        optimization_runs: Optional[int] = 200,
-        constructor_arguments: Optional[str] = None,
-        evm_version: Optional[str] = None,
-        license_type: Optional[int] = None,
-        libraries: Optional[Dict[str, str]] = None,
+        optimization_runs: int | None = 200,
+        constructor_arguments: str | None = None,
+        evm_version: str | None = None,
+        license_type: int | None = None,
+        libraries: dict[str, str] | None = None,
     ) -> str:
         libraries = libraries or {}
         if len(libraries) > 10:
@@ -237,7 +237,7 @@ class ContractClient(_APIClient):
         response = self._get(params=json_dict, raise_on_exceptions=False)
         return str(response.value)
 
-    def get_creation_data(self) -> List[ContractCreationResponse]:
+    def get_creation_data(self) -> list[ContractCreationResponse]:
         params = {
             **self.base_params,
             "action": "getcontractcreation",
@@ -262,11 +262,11 @@ class AccountClient(_APIClient):
 
     def get_all_normal_transactions(
         self,
-        start_block: Optional[int] = None,
-        end_block: Optional[int] = None,
+        start_block: int | None = None,
+        end_block: int | None = None,
         offset: int = 100,
         sort: str = "asc",
-    ) -> Iterator[Dict]:
+    ) -> Iterator[dict]:
         page_num = 1
         last_page_results = offset  # Start at offset to trigger iteration
         while last_page_results == offset:
@@ -283,11 +283,11 @@ class AccountClient(_APIClient):
     def _get_page_of_normal_transactions(
         self,
         page: int,
-        start_block: Optional[int] = None,
-        end_block: Optional[int] = None,
+        start_block: int | None = None,
+        end_block: int | None = None,
         offset: int = 100,
         sort: str = "asc",
-    ) -> List[Dict]:
+    ) -> list[dict]:
         params = {
             **self.base_params,
             "action": "txlist",

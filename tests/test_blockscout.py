@@ -22,7 +22,7 @@ ecosystems_and_networks = [
     for p in plist
 ]
 base_url_test = pytest.mark.parametrize(
-    "ecosystem,network,url",
+    ("ecosystem", "network", "url"),
     [
         # Base
         ("base", "mainnet", "base.blockscout.com"),
@@ -69,7 +69,7 @@ def test_get_transaction_url(ecosystem, network, url, get_explorer):
     assert actual == expected
 
 
-@pytest.mark.parametrize("ecosystem,network", ecosystems_and_networks)
+@pytest.mark.parametrize(("ecosystem", "network"), ecosystems_and_networks)
 def test_get_contract_type_ecosystems_and_networks(
     mock_backend,
     ecosystem,
@@ -93,7 +93,7 @@ def test_get_contract_type_ecosystems_and_networks(
 
 
 @pytest.mark.parametrize(
-    "file_name", ("get_proxy_contract_response", ("get_vyper_contract_response"))
+    "file_name", ["get_proxy_contract_response", ("get_vyper_contract_response")]
 )
 def test_get_contract_type_additional_types(mock_backend, file_name, explorer):
     # This test parametrizes getting edge-case contract types.
