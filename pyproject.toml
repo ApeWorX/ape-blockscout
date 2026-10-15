@@ -46,7 +46,6 @@ test = [
     "ape-base",
     "ape-optimism",
     "ape-polygon",
-    "ape-infura",
     "ape-solidity",
     "pytest-mock",
 

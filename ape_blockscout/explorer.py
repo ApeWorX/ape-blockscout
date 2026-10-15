@@ -53,8 +53,7 @@ class Blockscout(ExplorerAPI):
 
         contract_type = ContractType(abi=abi, contractName=source_code.name)
         if source_code.name == "Vyper_contract" and "symbol" in contract_type.view_methods:
-            # Best-effort name enrichment; ignore when no live provider (tests stub
-            # active_provider as MagicMock with is_connected=True).
+            # Best-effort name enrichment via eth_call; ignore if provider cannot serve it.
             try:
                 contract = ContractInstance(address, contract_type)
                 contract_type.name = contract.symbol() or contract_type.name

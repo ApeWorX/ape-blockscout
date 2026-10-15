@@ -108,16 +108,14 @@ def standard_input_json(library):
 
 
 @pytest.fixture(autouse=True)
-def connection(mocker, networks):
-    """Stub active provider as Ethereum mainnet without a live RPC (ape 0.8)."""
-    provider = mocker.MagicMock()
-    provider.network = networks.ethereum.mainnet
-    provider.chain_id = 1
-    provider.is_connected = True
-    saved = networks.active_provider
-    networks.active_provider = provider
-    yield provider
-    networks.active_provider = saved
+def connection(networks):
+    """Connect via ape's built-in public ``node`` provider (evmchains RPC).
+
+    Avoids paid plugins (Infura/Alchemy). Needed so Vyper contract-type
+    name enrichment can eth_call ``symbol()`` on mainnet.
+    """
+    with networks.ethereum.mainnet.use_provider("node") as provider:
+        yield provider
 
 
 def make_source(base_dir: Path, name: str, content: str):

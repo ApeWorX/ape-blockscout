@@ -88,30 +88,10 @@ def test_get_contract_type_ecosystems_and_networks(
     assert actual == expected
 
 
-@pytest.fixture
-def mock_vyper_symbol(mocker):
-    """Stub ContractInstance.symbol for Vyper name enrichment (no live Infura).
-
-    Main used ethereum.mainnet Infura; packaging stubs active_provider. Map the
-    known mock addresses to the symbols those contracts return on-chain.
-    """
-    symbols = {
-        "0x55A8a39bc9694714E2874c1ce77aa1E599461E18".lower(): "MIM-UST-f",
-        "0xdA816459F1AB5631232FE5e97a05BBBb94970c95".lower(): "yvDAI",
-    }
-
-    def factory(address, contract_type, *args, **kwargs):
-        contract = mocker.MagicMock()
-        contract.symbol.return_value = symbols.get(str(address).lower(), "yvDAI")
-        return contract
-
-    mocker.patch("ape_blockscout.explorer.ContractInstance", side_effect=factory)
-
-
 @pytest.mark.parametrize(
     "file_name", ["get_proxy_contract_response", ("get_vyper_contract_response")]
 )
-def test_get_contract_type_additional_types(mock_backend, file_name, explorer, mock_vyper_symbol):
+def test_get_contract_type_additional_types(mock_backend, file_name, explorer):
     # This test parametrizes getting edge-case contract types.
     # NOTE: Purposely not merged with test above to avoid adding a new dimension
     #  to the parametrization.
@@ -121,7 +101,7 @@ def test_get_contract_type_additional_types(mock_backend, file_name, explorer, m
     assert actual == expected
 
 
-def test_get_contract_type_with_rate_limiting(mock_backend, explorer, mock_vyper_symbol):
+def test_get_contract_type_with_rate_limiting(mock_backend, explorer):
     """
     This test ensures the rate limiting logic in the Explorer client works.
     """
