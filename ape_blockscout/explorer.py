@@ -3,7 +3,7 @@ from json.decoder import JSONDecodeError
 
 from ape.api import ExplorerAPI
 from ape.contracts import ContractInstance
-from ape.exceptions import APINotImplementedError, ProviderNotConnectedError
+from ape.exceptions import APINotImplementedError
 from ape.logging import logger
 from ape.types import AddressType, ContractType
 
@@ -53,11 +53,12 @@ class Blockscout(ExplorerAPI):
 
         contract_type = ContractType(abi=abi, contractName=source_code.name)
         if source_code.name == "Vyper_contract" and "symbol" in contract_type.view_methods:
-            # Best-effort name enrichment via eth_call; ignore if provider cannot serve it.
+            # Best-effort name enrichment via eth_call; ignore if provider cannot serve it
+            # (public RPCs may 403 / whitelist-block eth_call).
             try:
                 contract = ContractInstance(address, contract_type)
                 contract_type.name = contract.symbol() or contract_type.name
-            except (ProviderNotConnectedError, TypeError, ValueError, AttributeError):
+            except Exception:
                 pass
 
         return contract_type

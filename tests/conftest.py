@@ -107,15 +107,38 @@ def standard_input_json(library):
     }
 
 
+# Public mainnet HTTP URIs from ape/core evmchains that support eth_call.
+# Random get_random_rpc often picks flashbots/cloudflare, which reject eth_call
+# from CI IPs (403 / "rpc method is not whitelisted").
+_PUBLIC_MAINNET_URIS = (
+    "https://mainnet.gateway.tenderly.co",
+    "https://ethereum-rpc.publicnode.com",
+    "https://eth.drpc.org",
+)
+
+
 @pytest.fixture(autouse=True)
 def connection(networks):
-    """Connect via ape's built-in public ``node`` provider (evmchains RPC).
+    """Connect via ape's built-in public ``node`` provider (no Infura/Alchemy).
 
-    Avoids paid plugins (Infura/Alchemy). Needed so Vyper contract-type
-    name enrichment can eth_call ``symbol()`` on mainnet.
+    Pins a public URI from ape/core's evmchains list so Vyper ``symbol()``
+    name enrichment can eth_call reliably on CI.
     """
-    with networks.ethereum.mainnet.use_provider("node") as provider:
-        yield provider
+    last_err: Exception | None = None
+    for uri in _PUBLIC_MAINNET_URIS:
+        try:
+            ctx = networks.ethereum.mainnet.use_provider("node", provider_settings={"uri": uri})
+            provider = ctx.__enter__()
+        except Exception as err:  # noqa: BLE001 — try next public URI
+            last_err = err
+            continue
+        try:
+            yield provider
+        finally:
+            ctx.__exit__(None, None, None)
+        return
+    assert last_err is not None
+    raise last_err
 
 
 def make_source(base_dir: Path, name: str, content: str):
