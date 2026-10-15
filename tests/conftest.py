@@ -24,7 +24,6 @@ from ape_blockscout.client import _APIClient
 from ape_blockscout.types import BlockscoutResponse
 
 ape.config.DATA_FOLDER = Path(mkdtemp()).resolve()
-ape.config.PROJECT_FOLDER = Path(mkdtemp()).resolve()
 
 MOCK_RESPONSES_PATH = Path(__file__).parent / "mock_responses"
 CONTRACT_ADDRESS = "0xFe80e7afB7041c1592a2A5d8f617518c1591Aad4"
@@ -109,9 +108,16 @@ def standard_input_json(library):
 
 
 @pytest.fixture(autouse=True)
-def connection(explorer):
-    with ape.networks.ethereum.mainnet.use_provider("infura") as provider:
-        yield provider
+def connection(mocker, networks):
+    """Stub active provider as Ethereum mainnet without a live RPC (ape 0.8)."""
+    provider = mocker.MagicMock()
+    provider.network = networks.ethereum.mainnet
+    provider.chain_id = 1
+    provider.is_connected = True
+    saved = networks.active_provider
+    networks.active_provider = provider
+    yield provider
+    networks.active_provider = saved
 
 
 def make_source(base_dir: Path, name: str, content: str):
@@ -122,21 +128,23 @@ def make_source(base_dir: Path, name: str, content: str):
 
 @pytest.fixture(scope="session", autouse=True)
 def project():
-    base_dir = ape.config.PROJECT_FOLDER
-    contracts_dir = base_dir / "contracts"
-    dependency_contracts_dir = base_dir / "bar" / "contracts"
-    sub_contracts_dir = contracts_dir / "subcontracts"
-    sub_contracts_dir.mkdir(exist_ok=True, parents=True)
-    dependency_contracts_dir.mkdir(exist_ok=True, parents=True)
+    """Temp project with contracts for verification-style tests (ape 0.8+)."""
+    with ape.Project.create_temporary_project() as project:
+        base_dir = project.path
+        contracts_dir = base_dir / "contracts"
+        dependency_contracts_dir = base_dir / "bar" / "contracts"
+        sub_contracts_dir = contracts_dir / "subcontracts"
+        sub_contracts_dir.mkdir(exist_ok=True, parents=True)
+        dependency_contracts_dir.mkdir(exist_ok=True, parents=True)
 
-    make_source(sub_contracts_dir, "foo", FOO_SOURCE_CODE)
-    make_source(dependency_contracts_dir, "bar", BAR_SOURCE_CODE)
+        make_source(sub_contracts_dir, "foo", FOO_SOURCE_CODE)
+        make_source(dependency_contracts_dir, "bar", BAR_SOURCE_CODE)
 
-    config_file = base_dir / "ape-config.yaml"
-    config_file.unlink(missing_ok=True)
-    config_file.write_text(APE_CONFIG_FILE)
+        config_file = base_dir / "ape-config.yaml"
+        config_file.unlink(missing_ok=True)
+        config_file.write_text(APE_CONFIG_FILE)
+        project.reload_config()
 
-    with ape.config.using_project(base_dir) as project:
         yield project
 
 
