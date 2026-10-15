@@ -193,8 +193,9 @@ def get_explorer(mocker):
             explorer.network = network
         else:
             network = ecosystem.get_network(network_name)
-            explorer = network.explorer
-            assert explorer is not None
+            explorer_maybe = network.explorer
+            assert explorer_maybe is not None
+            explorer = explorer_maybe
 
         return explorer
 
