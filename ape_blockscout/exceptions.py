@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from ape.exceptions import ApeException
 from requests import Response
@@ -39,7 +39,7 @@ class BlockscoutResponseError(BlockscoutException):
     Raised when the response is not correct.
     """
 
-    def __init__(self, response: Union[Response, "BlockscoutResponse"], message: str):
+    def __init__(self, response: "Response | BlockscoutResponse", message: str):
         if not isinstance(response, Response):
             response = response.response
 
@@ -53,7 +53,7 @@ class UnhandledResultError(BlockscoutResponseError):
     has an unhandled form.
     """
 
-    def __init__(self, response: Union[Response, "BlockscoutResponse"], value: "ResponseValue"):
+    def __init__(self, response: "Response | BlockscoutResponse", value: "ResponseValue"):
         message = f"Unhandled response format: {value}"
         super().__init__(response, message)
 
@@ -63,7 +63,7 @@ class BlockscoutTooManyRequestsError(BlockscoutResponseError):
     Raised after being rate-limited by Blockscout.
     """
 
-    def __init__(self, response: Union[Response, "BlockscoutResponse"], ecosystem: str):
+    def __init__(self, response: "Response | BlockscoutResponse", ecosystem: str):
         message = "Blockscout API server rate limit exceeded."
         api_key_name = API_KEY_ENV_KEY_MAP[ecosystem]
         if not os.environ.get(api_key_name):
