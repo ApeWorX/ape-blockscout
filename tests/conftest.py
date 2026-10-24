@@ -1,13 +1,14 @@
+import _io  # type: ignore
 import json
 import os
+from collections.abc import Callable
 from io import StringIO
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import IO, Any, Callable, Dict, Optional, Union
+from typing import IO, Any
 from unittest.mock import MagicMock
 
-import _io  # type: ignore
 import ape
 import pytest
 from ape.api import ExplorerAPI
@@ -23,7 +24,6 @@ from ape_blockscout.client import _APIClient
 from ape_blockscout.types import BlockscoutResponse
 
 ape.config.DATA_FOLDER = Path(mkdtemp()).resolve()
-ape.config.PROJECT_FOLDER = Path(mkdtemp()).resolve()
 
 MOCK_RESPONSES_PATH = Path(__file__).parent / "mock_responses"
 CONTRACT_ADDRESS = "0xFe80e7afB7041c1592a2A5d8f617518c1591Aad4"
@@ -107,10 +107,38 @@ def standard_input_json(library):
     }
 
 
+# Public mainnet HTTP URIs from ape/core evmchains that support eth_call.
+# Random get_random_rpc often picks flashbots/cloudflare, which reject eth_call
+# from CI IPs (403 / "rpc method is not whitelisted").
+_PUBLIC_MAINNET_URIS = (
+    "https://mainnet.gateway.tenderly.co",
+    "https://ethereum-rpc.publicnode.com",
+    "https://eth.drpc.org",
+)
+
+
 @pytest.fixture(autouse=True)
-def connection(explorer):
-    with ape.networks.ethereum.mainnet.use_provider("infura") as provider:
-        yield provider
+def connection(networks):
+    """Connect via ape's built-in public ``node`` provider (no Infura/Alchemy).
+
+    Pins a public URI from ape/core's evmchains list so Vyper ``symbol()``
+    name enrichment can eth_call reliably on CI.
+    """
+    last_err: Exception | None = None
+    for uri in _PUBLIC_MAINNET_URIS:
+        try:
+            ctx = networks.ethereum.mainnet.use_provider("node", provider_settings={"uri": uri})
+            provider = ctx.__enter__()
+        except Exception as err:  # noqa: BLE001 — try next public URI
+            last_err = err
+            continue
+        try:
+            yield provider
+        finally:
+            ctx.__exit__(None, None, None)
+        return
+    assert last_err is not None
+    raise last_err
 
 
 def make_source(base_dir: Path, name: str, content: str):
@@ -121,21 +149,23 @@ def make_source(base_dir: Path, name: str, content: str):
 
 @pytest.fixture(scope="session", autouse=True)
 def project():
-    base_dir = ape.config.PROJECT_FOLDER
-    contracts_dir = base_dir / "contracts"
-    dependency_contracts_dir = base_dir / "bar" / "contracts"
-    sub_contracts_dir = contracts_dir / "subcontracts"
-    sub_contracts_dir.mkdir(exist_ok=True, parents=True)
-    dependency_contracts_dir.mkdir(exist_ok=True, parents=True)
+    """Temp project with contracts for verification-style tests (ape 0.8+)."""
+    with ape.Project.create_temporary_project() as project:
+        base_dir = project.path
+        contracts_dir = base_dir / "contracts"
+        dependency_contracts_dir = base_dir / "bar" / "contracts"
+        sub_contracts_dir = contracts_dir / "subcontracts"
+        sub_contracts_dir.mkdir(exist_ok=True, parents=True)
+        dependency_contracts_dir.mkdir(exist_ok=True, parents=True)
 
-    make_source(sub_contracts_dir, "foo", FOO_SOURCE_CODE)
-    make_source(dependency_contracts_dir, "bar", BAR_SOURCE_CODE)
+        make_source(sub_contracts_dir, "foo", FOO_SOURCE_CODE)
+        make_source(dependency_contracts_dir, "bar", BAR_SOURCE_CODE)
 
-    config_file = base_dir / "ape-config.yaml"
-    config_file.unlink(missing_ok=True)
-    config_file.write_text(APE_CONFIG_FILE)
+        config_file = base_dir / "ape-config.yaml"
+        config_file.unlink(missing_ok=True)
+        config_file.write_text(APE_CONFIG_FILE)
+        project.reload_config()
 
-    with ape.config.using_project(base_dir) as project:
         yield project
 
 
@@ -192,8 +222,9 @@ def get_explorer(mocker):
             explorer.network = network
         else:
             network = ecosystem.get_network(network_name)
-            explorer = network.explorer
-            assert explorer is not None
+            explorer_maybe = network.explorer
+            assert explorer_maybe is not None
+            explorer = explorer_maybe
 
         return explorer
 
@@ -224,16 +255,14 @@ class MockBlockscoutBackend:
     @cached_property
     def expected_uri_map(
         self,
-    ) -> Dict[str, Dict[str, str]]:
+    ) -> dict[str, dict[str, str]]:
         return {
             "base": {
                 "mainnet": "https://base.blockscout.com/api",
-                "goerli": "https://base-goerli.blockscout.com/api",
                 "sepolia": "https://base-sepolia.blockscout.com/api",
             },
             "ethereum": {
                 "mainnet": "https://eth.blockscout.com/api",
-                "goerli": "https://eth-goerli.blockscout.com/api",
                 "sepolia": "https://eth-sepolia.blockscout.com/api",
             },
             "gnosis": {
@@ -242,7 +271,6 @@ class MockBlockscoutBackend:
             },
             "optimism": {
                 "mainnet": "https://optimism.blockscout.com/api",
-                "goerli": "https://optimism-goerli.blockscout.com/api",
                 "sepolia": "https://optimism-sepolia.blockscout.com/api",
             },
             "polygon": {
@@ -257,9 +285,9 @@ class MockBlockscoutBackend:
         self,
         method: str,
         module: str,
-        expected_params: Dict,
-        return_value: Optional[Any] = None,
-        side_effect: Optional[Callable] = None,
+        expected_params: dict,
+        return_value: Any | None = None,
+        side_effect: Callable | None = None,
     ):
         if isinstance(return_value, (str, dict)):
             return_value = self.get_mock_response(return_value)
@@ -280,7 +308,7 @@ class MockBlockscoutBackend:
                             actual_json = json.loads(text)
                         except JSONDecodeError:
                             pytest.fail(f"Response text is not JSON: '{text}'.")
-                            return
+                            return None
                     else:
                         # Empty.
                         actual_json = {}
@@ -299,9 +327,10 @@ class MockBlockscoutBackend:
             if return_value:
                 return return_value
 
-            elif side_effect:
+            if side_effect:
                 result = side_effect()
                 return result if isinstance(result, Response) else self.get_mock_response(result)
+            return None
 
         self._handlers[method.lower()][module] = handler
         self._session.request.side_effect = self.handle_request
@@ -361,10 +390,10 @@ class MockBlockscoutBackend:
         with open(test_data_path) as response_data_file:
             return self.get_mock_response(response_data_file, file_name=file_name)
 
-    def _expected_get_ct_params(self, address: str) -> Dict:
+    def _expected_get_ct_params(self, address: str) -> dict:
         return {"module": "contract", "action": "getsourcecode", "address": address}
 
-    def setup_mock_account_transactions_response(self, address: Optional[AddressType] = None):
+    def setup_mock_account_transactions_response(self, address: AddressType | None = None):
         file_name = "get_account_transactions.json"
         test_data_path = MOCK_RESPONSES_PATH / file_name
 
@@ -381,7 +410,7 @@ class MockBlockscoutBackend:
             return response
 
     def setup_mock_account_transactions_with_ctor_args_response(
-        self, address: Optional[AddressType] = None
+        self, address: AddressType | None = None
     ):
         file_name = "get_account_transactions_with_ctor_args.json"
         test_data_path = MOCK_RESPONSES_PATH / file_name
@@ -398,16 +427,14 @@ class MockBlockscoutBackend:
             self.set_network("ethereum", "mainnet")
             return response
 
-    def get_mock_response(
-        self, response_data: Optional[Union[IO, Dict, str, MagicMock]] = None, **kwargs
-    ):
+    def get_mock_response(self, response_data: IO | dict | str | MagicMock | None = None, **kwargs):
         if isinstance(response_data, str):
             return self.get_mock_response({"result": response_data})
 
-        elif isinstance(response_data, _io.TextIOWrapper):
+        if isinstance(response_data, _io.TextIOWrapper):
             return self.get_mock_response(json.load(response_data), **kwargs)
 
-        elif isinstance(response_data, MagicMock):
+        if isinstance(response_data, MagicMock):
             # Mock wasn't set.
             response_data = {}
 

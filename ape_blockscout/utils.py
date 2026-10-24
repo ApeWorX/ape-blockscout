@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 API_KEY_ENV_KEY_MAP = {
     "base": "BASE_BLOCKSCOUT_API_KEY",
     "ethereum": "ETH_BLOCKSCOUT_API_KEY",
@@ -8,10 +6,10 @@ API_KEY_ENV_KEY_MAP = {
     "polygon": "POLYGON_BLOCKSCOUT_API_KEY",
 }
 
-NETWORKS: Dict[str, List[str]] = {
-    "base": ["mainnet", "goerli", "sepolia"],
-    "ethereum": ["mainnet", "goerli", "sepolia"],
+NETWORKS: dict[str, list[str]] = {
+    "base": ["mainnet", "sepolia"],
+    "ethereum": ["mainnet", "sepolia"],
     "gnosis": ["mainnet", "chiado"],
-    "optimism": ["mainnet", "goerli", "sepolia"],
+    "optimism": ["mainnet", "sepolia"],
     "polygon": ["mainnet"],
 }

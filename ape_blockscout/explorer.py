@@ -1,10 +1,9 @@
 import json
 from json.decoder import JSONDecodeError
-from typing import Optional
 
 from ape.api import ExplorerAPI
 from ape.contracts import ContractInstance
-from ape.exceptions import APINotImplementedError, ProviderNotConnectedError
+from ape.exceptions import APINotImplementedError
 from ape.logging import logger
 from ape.types import AddressType, ContractType
 
@@ -35,7 +34,7 @@ class Blockscout(ExplorerAPI):
             network_name=self.network.name.replace("-fork", ""),
         )
 
-    def get_contract_type(self, address: AddressType) -> Optional[ContractType]:
+    def get_contract_type(self, address: AddressType) -> ContractType | None:
         if not self.conversion_manager.is_type(address, AddressType):
             # Handle non-checksummed addresses
             address = self.conversion_manager.convert(str(address), AddressType)
@@ -54,10 +53,12 @@ class Blockscout(ExplorerAPI):
 
         contract_type = ContractType(abi=abi, contractName=source_code.name)
         if source_code.name == "Vyper_contract" and "symbol" in contract_type.view_methods:
+            # Best-effort name enrichment via eth_call; ignore if provider cannot serve it
+            # (public RPCs may 403 / whitelist-block eth_call).
             try:
                 contract = ContractInstance(address, contract_type)
                 contract_type.name = contract.symbol() or contract_type.name
-            except ProviderNotConnectedError:
+            except Exception:
                 pass
 
         return contract_type
