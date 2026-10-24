@@ -4,6 +4,7 @@ API_KEY_ENV_KEY_MAP = {
     "gnosis": "GNOSIS_BLOCKSCOUT_API_KEY",
     "optimism": "OPTIMISM_BLOCKSCOUT_API_KEY",
     "polygon": "POLYGON_BLOCKSCOUT_API_KEY",
+    "filecoin": "FILECOIN_BLOCKSCOUT_API_KEY",
 }
 
 NETWORKS: dict[str, list[str]] = {
@@ -12,4 +13,5 @@ NETWORKS: dict[str, list[str]] = {
     "gnosis": ["mainnet", "chiado"],
     "optimism": ["mainnet", "sepolia"],
     "polygon": ["mainnet"],
+    "filecoin": ["mainnet"],
 }

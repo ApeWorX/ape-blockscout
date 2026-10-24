@@ -7,6 +7,7 @@ The following blockchain explorers are supported in this plugin:
 - [Gnosis](https://gnosis.blockscout.com/) for Gnosis networks.
 - [Optimism](https://optimism.blockscout.com/) for Optimism networks.
 - [Polygon](https://polygon.blockscout.com/) for Polygon POS networks.
+- [Filecoin](https://filecoin.blockscout.com/) for Filecoin networks.
 
 ## Dependencies
 
